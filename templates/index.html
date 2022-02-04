@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WebWOL</title>
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/bootstrap-icons.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1><img class="mb-4" src="img/alarm.svg" alt="" width="72" height="57"> WebWOL</h1>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Device</th>
+          <th>MAC</th>
+          <th>IP</th>
+          <th></th>
+          <th><button type="button" class="btn btn-success btn-sm" onclick="showFormNew();"><i class="bi-plus"></i> Add</button></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range $index, $element := .Data}}
+        <tr id="idx-{{$index}}" data-device="{{$element.Device}}" data-mac="{{$element.Mac}}" data-ip="{{$element.Ip}}">
+          <td id="device-{{$index}}">{{$element.Device}}</td>
+          <td id="mac-{{$index}}">{{$element.Mac}}</td>
+          <td id="ip-{{$index}}">{{$element.Ip}}</td>
+          <td><button type="button" class="btn btn-primary btn-sm"><i class="bi-alarm"></i> Wake-Up</button></td>
+          <td>
+            <div class="btn-group" role="group" aria-label="Basic example">
+              <button class="btn btn-link" onclick="showFormEdit({{$index}})"><i class="bi-pencil"></i></button>
+              <button class="btn btn-link" onclick="deleteAlert({{$index}})"><i class="bi-trash"></i></button>
+              <button class="btn btn-link" onclick="cloneItem({{$index}})"><i class="bi-files"></i></button>
+              <button class="btn btn-link" onclick="qrCode({{$index}})"><i class="bi-qr-code"></i></button>
+            </div>
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="modal fade" id="wolForm" tabindex="-1" aria-labelledby="wolFormLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">Modal title</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="form-input" role="form" action="" method="post">
+            <input type="hidden" id="scope-input" name="scope">
+            <input type="hidden" id="odevice-input" name="odevice">
+            <div class="mb-3">
+              <label for="device-input" class="col-form-label">Device:</label>
+              <input type="text" class="form-control" id="device-input" name="device">
+            </div>
+            <div class="mb-3">
+              <label for="mac-input" class="col-form-label">MAC address:</label>
+              <input type="text" class="form-control" id="mac-input" name="mac"></input>
+            </div>
+            <div class="mb-3">
+              <label for="ip-input" class="col-form-label">Broadcast IP:</label>
+              <input type="text" class="form-control" id="ip-input" name="ip"></input>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" name="submit" onclick="submitForm()">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="alertForm" tabindex="-1" aria-labelledby="alertLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="alertTitle">Modal title</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p id="alertMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" onclick="deleteItem()">Ok</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="qrcodeForm" tabindex="-1" aria-labelledby="alertLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="qrcodeTitle">Modal title</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <img src="" alt="QR code for direct wake up of device" id="qrcodeImage">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-info" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/bootstrap.bundle.min.js"></script>
+  <script src="js/webwol.js"></script>
+</body>
+</html>
