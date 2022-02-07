@@ -26,31 +26,57 @@ var (
 )
 
 type TemplateData struct {
-	Data []WakeUp
+	Data        []WakeUp
+	ShowMessage bool
+	Message     string
+	Severity    string
 }
 
 func handlerIndex(w http.ResponseWriter, r *http.Request) {
+	loadData()
+	message := ""
+	severity := "sucess"
+	showMessage := false
 	if r.RequestURI == "" || r.RequestURI == "/" {
+		c, err := r.Cookie("message")
+		if err == nil {
+			s := strings.Split(c.Value, "|")
+			if len(s) == 2 {
+				severity = s[0]
+				message = s[1]
+				showMessage = true
+				http.SetCookie(w, &http.Cookie{Name: "message", Value: "", Path: "/"})
+			}
+		}
 		if r.Method == http.MethodPost {
 			w, odevice, scope, err := wakeUpFromRequest(r)
 			if err != nil {
 				// add error message to page
+				message = fmt.Sprintf("No changes made: %v", err)
+				severity = "danger"
+				showMessage = true
 			} else {
-				loadData()
 				err = insertOrUpdateData(w, odevice, scope)
 				if err != nil {
-					// add error message to page
+					message = fmt.Sprintf("No changes made: %v", err)
+					severity = "danger"
+					showMessage = true
 				} else {
 					saveData()
+					message = fmt.Sprintf("Changes written")
+					severity = "success"
+					showMessage = true
 				}
 			}
 		}
-		t, _ := template.ParseFS(templates, templateDir+"/index.html")
-		loadData() // maybe not needed any more
 		td := TemplateData{
-			Data: data,
+			Data:        data,
+			ShowMessage: showMessage,
+			Message:     message,
+			Severity:    severity,
 		}
-		t.Execute(w, td)
+		renderTemplateIndex(w, td)
+		//t.Execute(w, td)
 		accessLog(r, http.StatusOK, "")
 	} else if strings.HasSuffix(r.RequestURI, "/delete") {
 		handlerDelete(w, r)
@@ -60,6 +86,9 @@ func handlerIndex(w http.ResponseWriter, r *http.Request) {
 		accessLog(r, http.StatusOK, "")
 	} else if strings.HasSuffix(r.RequestURI, "/qrcode") {
 		handlerQrCode(w, r)
+		accessLog(r, http.StatusOK, "")
+	} else if strings.HasSuffix(r.RequestURI, "/wakeup") {
+		handlerWakeup(w, r)
 		accessLog(r, http.StatusOK, "")
 	} else if r.RequestURI == "/index.html" {
 		http.Redirect(w, r, "./", http.StatusMovedPermanently)
@@ -114,43 +143,73 @@ func handlerStaticFiles(w http.ResponseWriter, r *http.Request) {
 
 // GET /{device}/delete
 func handlerDelete(w http.ResponseWriter, r *http.Request) {
-	loadData()
 	s := strings.Split(r.URL.Path, "/")
 	if len(s) != 3 || s[2] != "delete" || !deviceExists(s[1]) {
-		http.Redirect(w, r, "/", http.StatusMovedPermanently)
+		http.SetCookie(w, &http.Cookie{
+			Name:  "message",
+			Value: "danger|Bad request.",
+			Path:  "/",
+		})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 	log.Printf("DELETE %s", s[1])
 	err := deleteItem(s[1])
 	if err != nil {
-		// add error message to page
+		http.SetCookie(w, &http.Cookie{
+			Name:  "message",
+			Value: "danger|Device was not deleted.",
+			Path:  "/",
+		})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
 	} else {
 		saveData()
 	}
-	http.Redirect(w, r, "/", http.StatusMovedPermanently)
+	http.SetCookie(w, &http.Cookie{
+		Name:  "message",
+		Value: "success|Device deleted.",
+		Path:  "/",
+	})
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // GET /{device}/clone
 func handlerClone(w http.ResponseWriter, r *http.Request) {
-	loadData()
 	s := strings.Split(r.URL.Path, "/")
 	if len(s) != 3 || s[2] != "clone" || !deviceExists(s[1]) {
-		http.Redirect(w, r, "/", http.StatusMovedPermanently)
+		http.SetCookie(w, &http.Cookie{
+			Name:  "message",
+			Value: "danger|Bad request.",
+			Path:  "/",
+		})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 	log.Printf("CLONE %s", s[1])
 	err := cloneItem(s[1])
 	if err != nil {
-		// add error message to page
+		http.SetCookie(w, &http.Cookie{
+			Name:  "message",
+			Value: "danger|Device was not cloned.",
+			Path:  "/",
+		})
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
 	} else {
 		saveData()
 	}
-	http.Redirect(w, r, "/", http.StatusMovedPermanently)
+	http.SetCookie(w, &http.Cookie{
+		Name:  "message",
+		Value: "success|Device cloned.",
+		Path:  "/",
+	})
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // GET /{device}/qrcode
 func handlerQrCode(w http.ResponseWriter, r *http.Request) {
-	loadData()
 	s := strings.Split(r.URL.Path, "/")
 	if len(s) != 3 || s[2] != "qrcode" || !deviceExists(s[1]) {
 		renderNotFound(w, r)
@@ -167,13 +226,29 @@ func handlerQrCode(w http.ResponseWriter, r *http.Request) {
 	png.Encode(w, qrCode)
 }
 
+// GET /{device}/qrcode
+func handlerWakeup(w http.ResponseWriter, r *http.Request) {
+	s := strings.Split(r.URL.Path, "/")
+	if len(s) != 3 || s[2] != "wakeup" || !deviceExists(s[1]) {
+		// add error message
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	wu, ok := wakeupData(s[1])
+	if ok {
+		wolUdp(wu.Ip, wu.Mac, nil)
+	}
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
 func accessLog(r *http.Request, httpCode int, payload string) {
 	log.Printf("%s %s, %d, %s", r.Method, r.RequestURI, httpCode, payload)
 }
 
 func renderNotFound(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
-	fmt.Fprintf(w, "Could not find the page you requested: %s.", r.RequestURI)
+	renderWithMessage(w, "Page not found!", "danger")
 }
 
 func renderServerError(w http.ResponseWriter, r *http.Request) {
@@ -212,4 +287,18 @@ func wakeUpFromRequest(r *http.Request) (WakeUp, string, string, error) {
 	w.Ip = ip[0]
 	log.Printf("Got POST request with data (%s, %s, %s, %s)", w.Device, w.Mac, w.Ip, scope[0])
 	return w, odevice[0], scope[0], nil
+}
+func renderTemplateIndex(w http.ResponseWriter, td TemplateData) {
+	t, _ := template.ParseFS(templates, templateDir+"/index.html")
+	t.Execute(w, td)
+}
+
+func renderWithMessage(w http.ResponseWriter, message string, severity string) {
+	td := TemplateData{
+		Data:        data,
+		ShowMessage: true,
+		Message:     message,
+		Severity:    severity,
+	}
+	renderTemplateIndex(w, td)
 }

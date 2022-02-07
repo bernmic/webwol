@@ -53,8 +53,7 @@ function deleteAlert(idx) {
 
 function deleteItem() {
     window.location.href = "/" + escape(currentDevice) +  "/delete"
-    modalAlert.hide()
-    console.log("Delete item " + currentIdx)
+    //modalAlert.hide()
 }
 
 function cloneItem(idx) {
@@ -70,4 +69,9 @@ function qrCode(idx) {
     image.src = "/" + escape(data.dataset.device) +  "/qrcode"
     modalAlert = new bootstrap.Modal(document.getElementById('qrcodeForm'), {backdrop: 'static'});
     modalAlert.show()
+}
+
+function wakeUp(idx) {
+    const data = document.getElementById("idx-" + idx)
+    window.location.href = "/" + escape(data.dataset.device) +  "/wakeup"
 }

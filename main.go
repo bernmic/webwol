@@ -59,17 +59,18 @@ func main() {
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%04d", port), nil))
 }
 
-func wolUdp(ip string, mac net.HardwareAddr, password []byte) error {
+func wolUdp(ip string, mac string, password []byte) error {
 	c, err := wol.NewClient()
 	if err != nil {
 		return err
 	}
 	defer c.Close()
 
+	m, err := net.ParseMAC(mac)
 	if password != nil {
-		return c.WakePassword(ip, mac, password)
+		return c.WakePassword(ip, m, password)
 	}
-	return c.Wake(ip, mac)
+	return c.Wake(ip, m)
 }
 
 func loadData() {
@@ -161,4 +162,13 @@ func deviceExists(device string) bool {
 		}
 	}
 	return false
+}
+
+func wakeupData(device string) (WakeUp, bool) {
+	for _, w := range data {
+		if w.Device == device {
+			return w, true
+		}
+	}
+	return WakeUp{}, false
 }

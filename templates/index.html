@@ -11,12 +11,16 @@
 <body>
   <div class="container">
     <h1><img class="mb-4" src="img/alarm.svg" alt="" width="72" height="57"> WebWOL</h1>
+    <div class="alert alert-{{.Severity}} alert-dismissible fade show" role="alert">
+      {{.Message}}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     <table class="table">
       <thead>
         <tr>
           <th>Device</th>
-          <th>MAC</th>
-          <th>IP</th>
+          <th>MAC address</th>
+          <th>Broadcast-IP:Port</th>
           <th></th>
           <th><button type="button" class="btn btn-success btn-sm" onclick="showFormNew();"><i class="bi-plus"></i> Add</button></th>
         </tr>
@@ -27,7 +31,7 @@
           <td id="device-{{$index}}">{{$element.Device}}</td>
           <td id="mac-{{$index}}">{{$element.Mac}}</td>
           <td id="ip-{{$index}}">{{$element.Ip}}</td>
-          <td><button type="button" class="btn btn-primary btn-sm"><i class="bi-alarm"></i> Wake-Up</button></td>
+          <td><button type="button" class="btn btn-primary btn-sm" onclick="wakeUp({{$index}})"><i class="bi-alarm"></i> Wake-Up</button></td>
           <td>
             <div class="btn-group" role="group" aria-label="Basic example">
               <button class="btn btn-link" onclick="showFormEdit({{$index}})"><i class="bi-pencil"></i></button>
@@ -54,15 +58,15 @@
             <input type="hidden" id="scope-input" name="scope">
             <input type="hidden" id="odevice-input" name="odevice">
             <div class="mb-3">
-              <label for="device-input" class="col-form-label">Device:</label>
+              <label for="device-input" class="col-form-label">Device</label>
               <input type="text" class="form-control" id="device-input" name="device">
             </div>
             <div class="mb-3">
-              <label for="mac-input" class="col-form-label">MAC address:</label>
+              <label for="mac-input" class="col-form-label">MAC address</label>
               <input type="text" class="form-control" id="mac-input" name="mac"></input>
             </div>
             <div class="mb-3">
-              <label for="ip-input" class="col-form-label">Broadcast IP:</label>
+              <label for="ip-input" class="col-form-label">Broadcast IP:Port</label>
               <input type="text" class="form-control" id="ip-input" name="ip"></input>
             </div>
           </form>
@@ -112,5 +116,10 @@
 
   <script src="js/bootstrap.bundle.min.js"></script>
   <script src="js/webwol.js"></script>
+  <script>
+    if (!{{.ShowMessage}}) {
+      document.querySelector(".alert").remove();
+    }
+  </script>
 </body>
 </html>
