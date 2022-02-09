@@ -1,0 +1,42 @@
+name: Release pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/webwol
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get the version
+        id: tag
+        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Create Release ${{github.ref}}
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+      - name: Log in to registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Build & Push Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.VERSION }}

@@ -230,13 +230,22 @@ func handlerQrCode(w http.ResponseWriter, r *http.Request) {
 func handlerWakeup(w http.ResponseWriter, r *http.Request) {
 	s := strings.Split(r.URL.Path, "/")
 	if len(s) != 3 || s[2] != "wakeup" || !deviceExists(s[1]) {
-		// add error message
+		http.SetCookie(w, &http.Cookie{
+			Name:  "message",
+			Value: "danger|Bad request.",
+			Path:  "/",
+		})
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
 	wu, ok := wakeupData(s[1])
 	if ok {
 		wolUdp(wu.Ip, wu.Mac, nil)
+		http.SetCookie(w, &http.Cookie{
+			Name:  "message",
+			Value: "success|Wake up signal sent.",
+			Path:  "/",
+		})
 	}
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
