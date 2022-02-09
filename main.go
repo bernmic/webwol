@@ -100,7 +100,7 @@ func insertOrUpdateData(wu WakeUp, odevice string, scope string) error {
 		return fmt.Errorf("device %s exists already", wu.Device)
 	}
 	if scope == "update" && !deviceExists(odevice) {
-		return fmt.Errorf("device %d does not exist", wu.Device)
+		return fmt.Errorf("device %s does not exist", wu.Device)
 	}
 	if scope == "insert" {
 		data = append(data, wu)
