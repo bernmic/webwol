@@ -144,14 +144,19 @@ func cloneItem(device string) error {
 	return fmt.Errorf("device %s not found for cloning", device)
 }
 
-func saveData() {
+func saveData() error {
 	f, err := os.Create(configDir + "/wakeup.json")
 	if err == nil {
 		defer f.Close()
 		b, err := json.Marshal(data)
 		if err == nil {
 			f.Write(b)
+			return nil
+		} else {
+			return fmt.Errorf("error writing file: %v", err)
 		}
+	} else {
+		return fmt.Errorf("error creating config file: %v", err)
 	}
 }
 

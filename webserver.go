@@ -61,11 +61,19 @@ func handlerIndex(w http.ResponseWriter, r *http.Request) {
 					message = fmt.Sprintf("No changes made: %v", err)
 					severity = "danger"
 					showMessage = true
+					log.Printf("Error creating config file: %v", err)
 				} else {
-					saveData()
-					message = fmt.Sprintf("Changes written")
-					severity = "success"
-					showMessage = true
+					err = saveData()
+					if err != nil {
+						message = "device was not saved"
+						severity = "danger"
+						showMessage = true
+						log.Printf("Error saving config file: %v", err)
+					} else {
+						message = fmt.Sprintf("Changes written")
+						severity = "success"
+						showMessage = true
+					}
 				}
 			}
 		}
@@ -164,7 +172,14 @@ func handlerDelete(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	} else {
-		saveData()
+		err = saveData()
+		if err != nil {
+			http.SetCookie(w, &http.Cookie{
+				Name:  "message",
+				Value: "danger|Device was not deleted.",
+				Path:  "/",
+			})
+		}
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name:  "message",
@@ -198,7 +213,14 @@ func handlerClone(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	} else {
-		saveData()
+		err = saveData()
+		if err != nil {
+			http.SetCookie(w, &http.Cookie{
+				Name:  "message",
+				Value: "danger|Device was not cloned.",
+				Path:  "/",
+			})
+		}
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name:  "message",
