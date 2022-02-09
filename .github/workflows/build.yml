@@ -29,6 +29,7 @@ jobs:
         run: go build -v ./...
       - name: Lint
         run: |
+          go get golang.org/x/lint/golint
           go vet .
           golint
       - name: Test
