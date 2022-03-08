@@ -3,18 +3,18 @@ simple Wake-On-Clan client configurable via a web page
 
 ## Environment variables
 
-### ENV_PORT 
+### WEBWOL_PORT 
 The port to listen. Default is ```8080```
 
-### ENV_ASSETS
+### WEBWOL_ASSETS
 The directory where the assets (js, css, image) are. Default is ```assets```
 
-### ENV_TEMPLATES
+### WEBWOL_TEMPLATES
 The directory where the templates are. Default is ```templates```
-### ENV_CONFIG
+### WEBWOL_CONFIG
 The directory where the configuration is stored. Default is ```config```
 
-### ENV_BASEURL
+### WEBWOL_BASEURL
 The base url of the app. Default is ```http://localhost:8080```. This is needed if QR-Codes are used.
 
 ## docker compose
@@ -28,7 +28,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      ENV_CONFIG: /config
+      WEBWOL_CONFIG: /config
     restart: always
     volumes:
       - ./config:/config

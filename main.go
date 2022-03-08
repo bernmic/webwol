@@ -29,7 +29,7 @@ type WakeUp struct {
 
 var (
 	data      []WakeUp
-	configDir = "config"
+	configDir = "/config"
 )
 
 func main() {
@@ -53,7 +53,7 @@ func main() {
 		baseURL = bs
 	}
 
-	log.Printf("Using port %d, templates %s and assets %s", port, templateDir, assetsDir)
+	log.Printf("Using port %d, config %s, templates %s and assets %s", port, configDir, templateDir, assetsDir)
 
 	http.HandleFunc("/", handlerIndex)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%04d", port), nil))
